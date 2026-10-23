@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Northwind Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.datatables.net/3.1.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --brand-1: #0f766e;
+            --brand-2: #115e59;
+            --brand-3: #134e4a;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --bg: #f1f5f9;
+            --sidebar-width: 260px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--brand-1) 0%, var(--brand-2) 55%, var(--brand-3) 100%);
+            color: #ecfdf5;
+            padding: 1.25rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            z-index: 1040;
+            transition: transform .25s ease;
+            box-shadow: 8px 0 30px rgba(15, 23, 42, .12);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+            padding: .5rem .75rem 1rem;
+        }
+
+        .brand i { font-size: 1.6rem; }
+
+        .nav-label {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: rgba(236, 253, 245, .6);
+            padding: .75rem .75rem .25rem;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(236, 253, 245, .82);
+            border-radius: .65rem;
+            padding: .6rem .75rem;
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            font-size: .94rem;
+            font-weight: 500;
+            transition: background .15s ease, color .15s ease, transform .15s ease;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, .1);
+            color: #fff;
+            transform: translateX(2px);
+        }
+
+        .sidebar .nav-link.active {
+            background: #fff;
+            color: var(--brand-3);
+            box-shadow: 0 8px 18px rgba(2, 44, 34, .25);
+        }
+
+        .sidebar .nav-link i { font-size: 1.05rem; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            font-size: .75rem;
+            color: rgba(236, 253, 245, .55);
+            padding: .75rem;
+            border-top: 1px solid rgba(255, 255, 255, .12);
+        }
+
+        .main {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-left: auto;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--brand-1);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            overflow: hidden;
+        }
+
+        .user-name { font-weight: 600; font-size: .9rem; line-height: 1.1; }
+        .user-email { font-size: .76rem; color: var(--muted); }
+
+        .content { padding: 1.75rem 1.5rem 2.5rem; }
+
+        .page-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .page-head h1 { font-size: 1.6rem; font-weight: 700; margin: 0; }
+        .page-head p { margin: .15rem 0 0; color: var(--muted); font-size: .9rem; }
+
+        .card-table {
+            border: 0;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+            overflow: hidden;
+        }
+
+        .card-table .card-body { padding: 1.25rem; }
+
+        table.dataTable thead th {
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        table.dataTable tbody td {
+            vertical-align: middle;
+            font-size: .9rem;
+        }
+
+        .btn-brand {
+            background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+            border: 0;
+            color: #fff;
+            font-weight: 600;
+            border-radius: .6rem;
+            padding: .55rem 1rem;
+        }
+
+        .btn-brand:hover { color: #fff; filter: brightness(1.08); }
+
+        .btn-action {
+            width: 34px;
+            height: 34px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: .55rem;
+            padding: 0;
+        }
+
+        .modal-content { border: 0; border-radius: 1rem; }
+        .modal-header { border-bottom: 1px solid #e2e8f0; }
+        .modal-footer { border-top: 1px solid #e2e8f0; }
+
+        .form-label { font-size: .82rem; font-weight: 600; color: #334155; }
+
+        .toast-container { z-index: 1090; }
+
+        .empty-hint { color: var(--muted); font-size: .9rem; }
+
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .content { padding: 1.25rem 1rem 2rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="brand"><i class="bi bi-shop-window"></i><span>Northwind</span></div>
+        <div class="nav-label">Gestión</div>
+        <nav id="menu" class="nav flex-column gap-1"></nav>
+        <div class="sidebar-footer">
+            API Northwind · JWT
+        </div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <button class="btn btn-light d-lg-none" id="btnMenu" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="user">
+                <div class="user-avatar" id="userAvatar"><i class="bi bi-person"></i></div>
+                <div class="d-none d-sm-block">
+                    <div class="user-name" id="userName">Usuario</div>
+                    <div class="user-email" id="userEmail"></div>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" id="btnSalir" type="button" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <section class="content">
+            <div class="page-head">
+                <div>
+                    <h1 id="pageTitle">Cargando...</h1>
+                    <p id="pageSubtitle"></p>
+                </div>
+                <button class="btn btn-brand" id="btnNuevo" type="button">
+                    <i class="bi bi-plus-lg me-1"></i> Nuevo
+                </button>
+            </div>
+
+            <div class="card card-table">
+                <div class="card-body">
+                    <table id="dataTable" class="table table-hover align-middle w-100"></table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal fade" id="entityModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="entityForm" class="needs-validation" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Registrar</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3" id="formFields"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-brand" id="btnGuardar">
+                            <i class="bi bi-check2 me-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts"></div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/3.1.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/3.1.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        const API_ORIGIN = location.port === '5500' ? 'https://localhost:7214' : '';
+
+        const money = value => value == null ? '' : '$' + Number(value).toFixed(2);
+        const fkText = (row, fallback) => row ? fallback(row) : '';
+
+        const entities = {
+            products: {
+                title: 'Productos',
+                subtitle: 'Catálogo de productos y su inventario',
+                endpoint: 'Products',
+                icon: 'bi-box-seam',
+                key: ['productId'],
+                fields: [
+                    { name: 'productId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'productName', label: 'Producto', type: 'text', required: true, maxLength: 40 },
+                    { name: 'supplierId', label: 'Proveedor', type: 'select', fk: 'suppliers', fkValue: 'supplierId', fkNumber: true, fkLabel: r => r.companyName },
+                    { name: 'categoryId', label: 'Categoría', type: 'select', fk: 'categories', fkValue: 'categoryId', fkNumber: true, fkLabel: r => r.categoryName },
+                    { name: 'quantityPerUnit', label: 'Cantidad por unidad', type: 'text', maxLength: 20, table: false },
+                    { name: 'unitPrice', label: 'Precio', type: 'number', step: '0.01', min: 0, render: v => money(v) },
+                    { name: 'unitsInStock', label: 'Existencias', type: 'number', min: 0 },
+                    { name: 'unitsOnOrder', label: 'En pedido', type: 'number', min: 0, table: false },
+                    { name: 'reorderLevel', label: 'Nivel de reorden', type: 'number', min: 0, table: false },
+                    { name: 'discontinued', label: 'Descontinuado', type: 'checkbox' }
+                ]
+            },
+            categories: {
+                title: 'Categorías',
+                subtitle: 'Clasificación del catálogo',
+                endpoint: 'Categories',
+                icon: 'bi-tags',
+                key: ['categoryId'],
+                fields: [
+                    { name: 'categoryId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'categoryName', label: 'Categoría', type: 'text', required: true, maxLength: 15 },
+                    { name: 'description', label: 'Descripción', type: 'textarea', maxLength: 300, table: false }
+                ]
+            },
+            suppliers: {
+                title: 'Proveedores',
+                subtitle: 'Empresas que abastecen el catálogo',
+                endpoint: 'Suppliers',
+                icon: 'bi-truck',
+                key: ['supplierId'],
+                fields: [
+                    { name: 'supplierId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'companyName', label: 'Empresa', type: 'text', required: true, maxLength: 40 },
+                    { name: 'contactName', label: 'Contacto', type: 'text', maxLength: 30 },
+                    { name: 'contactTitle', label: 'Cargo', type: 'text', maxLength: 30, table: false },
+                    { name: 'address', label: 'Dirección', type: 'text', maxLength: 60, table: false },
+                    { name: 'city', label: 'Ciudad', type: 'text', maxLength: 15 },
+                    { name: 'region', label: 'Región', type: 'text', maxLength: 15, table: false },
+                    { name: 'postalCode', label: 'C.P.', type: 'text', maxLength: 10, table: false },
+                    { name: 'country', label: 'País', type: 'text', maxLength: 15 },
+                    { name: 'phone', label: 'Teléfono', type: 'text', maxLength: 24 },
+                    { name: 'fax', label: 'Fax', type: 'text', maxLength: 24, table: false },
+                    { name: 'homePage', label: 'Sitio web', type: 'text', maxLength: 120, table: false }
+                ]
+            },
+            customers: {
+                title: 'Clientes',
+                subtitle: 'Clientes registrados en Northwind',
+                endpoint: 'Customers',
+                icon: 'bi-people',
+                key: ['customerId'],
+                fields: [
+                    { name: 'customerId', label: 'ID', type: 'text', key: true, required: true, maxLength: 5 },
+                    { name: 'companyName', label: 'Empresa', type: 'text', required: true, maxLength: 40 },
+                    { name: 'contactName', label: 'Contacto', type: 'text', maxLength: 30 },
+                    { name: 'contactTitle', label: 'Cargo', type: 'text', maxLength: 30, table: false },
+                    { name: 'address', label: 'Dirección', type: 'text', maxLength: 60, table: false },
+                    { name: 'city', label: 'Ciudad', type: 'text', maxLength: 15 },
+                    { name: 'region', label: 'Región', type: 'text', maxLength: 15, table: false },
+                    { name: 'postalCode', label: 'C.P.', type: 'text', maxLength: 10, table: false },
+                    { name: 'country', label: 'País', type: 'text', maxLength: 15 },
+                    { name: 'phone', label: 'Teléfono', type: 'text', maxLength: 24 },
+                    { name: 'fax', label: 'Fax', type: 'text', maxLength: 24, table: false }
+                ]
+            },
+            employees: {
+                title: 'Empleados',
+                subtitle: 'Personal de la empresa',
+                endpoint: 'Employees',
+                icon: 'bi-person-badge',
+                key: ['employeeId'],
+                fields: [
+                    { name: 'employeeId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'firstName', label: 'Nombre', type: 'text', required: true, maxLength: 10 },
+                    { name: 'lastName', label: 'Apellido', type: 'text', required: true, maxLength: 20 },
+                    { name: 'title', label: 'Puesto', type: 'text', maxLength: 30 },
+                    { name: 'titleOfCourtesy', label: 'Tratamiento', type: 'text', maxLength: 25, table: false },
+                    { name: 'birthDate', label: 'Nacimiento', type: 'date', table: false },
+                    { name: 'hireDate', label: 'Contratación', type: 'date' },
+                    { name: 'address', label: 'Dirección', type: 'text', maxLength: 60, table: false },
+                    { name: 'city', label: 'Ciudad', type: 'text', maxLength: 15 },
+                    { name: 'region', label: 'Región', type: 'text', maxLength: 15, table: false },
+                    { name: 'postalCode', label: 'C.P.', type: 'text', maxLength: 10, table: false },
+                    { name: 'country', label: 'País', type: 'text', maxLength: 15 },
+                    { name: 'homePhone', label: 'Teléfono', type: 'text', maxLength: 24 },
+                    { name: 'extension', label: 'Extensión', type: 'text', maxLength: 4, table: false },
+                    { name: 'notes', label: 'Notas', type: 'textarea', table: false },
+                    { name: 'reportsTo', label: 'Reporta a', type: 'select', fk: 'employees', fkValue: 'employeeId', fkNumber: true, fkLabel: r => `${r.firstName} ${r.lastName}` }
+                ]
+            },
+            shippers: {
+                title: 'Transportistas',
+                subtitle: 'Empresas de envío',
+                endpoint: 'Shippers',
+                icon: 'bi-truck-front',
+                key: ['shipperId'],
+                fields: [
+                    { name: 'shipperId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'companyName', label: 'Empresa', type: 'text', required: true, maxLength: 40 },
+                    { name: 'phone', label: 'Teléfono', type: 'text', maxLength: 24 }
+                ]
+            },
+            orders: {
+                title: 'Pedidos',
+                subtitle: 'Órdenes de compra y envíos',
+                endpoint: 'Orders',
+                icon: 'bi-receipt',
+                key: ['orderId'],
+                fields: [
+                    { name: 'orderId', label: 'ID', type: 'number', key: true, auto: true },
+                    { name: 'customerId', label: 'Cliente', type: 'select', fk: 'customers', fkValue: 'customerId', fkLabel: r => r.companyName },
+                    { name: 'employeeId', label: 'Empleado', type: 'select', fk: 'employees', fkValue: 'employeeId', fkNumber: true, fkLabel: r => `${r.firstName} ${r.lastName}` },
+                    { name: 'orderDate', label: 'Pedido', type: 'date' },
+                    { name: 'requiredDate', label: 'Requerido', type: 'date', table: false },
+                    { name: 'shippedDate', label: 'Enviado', type: 'date' },
+                    { name: 'shipVia', label: 'Transportista', type: 'select', fk: 'shippers', fkValue: 'shipperId', fkNumber: true, fkLabel: r => r.companyName },
+                    { name: 'freight', label: 'Flete', type: 'number', step: '0.01', min: 0, render: v => money(v) },
+                    { name: 'shipName', label: 'Enviar a', type: 'text', maxLength: 40, table: false },
+                    { name: 'shipAddress', label: 'Dirección de envío', type: 'text', maxLength: 60, table: false },
+                    { name: 'shipCity', label: 'Ciudad de envío', type: 'text', maxLength: 15, table: false },
+                    { name: 'shipRegion', label: 'Región de envío', type: 'text', maxLength: 15, table: false },
+                    { name: 'shipPostalCode', label: 'C.P. de envío', type: 'text', maxLength: 10, table: false },
+                    { name: 'shipCountry', label: 'País de envío', type: 'text', maxLength: 15, table: false }
+                ]
+            },
+            orderDetails: {
+                title: 'Detalle de pedidos',
+                subtitle: 'Líneas de cada pedido',
+                endpoint: 'OrderDetails',
+                icon: 'bi-list-check',
+                key: ['orderId', 'productId'],
+                fields: [
+                    { name: 'orderId', label: 'Pedido', type: 'select', key: true, required: true, fk: 'orders', fkValue: 'orderId', fkNumber: true, fkLabel: r => `#${r.orderId}${r.customerId ? ' · ' + r.customerId : ''}` },
+                    { name: 'productId', label: 'Producto', type: 'select', key: true, required: true, fk: 'products', fkValue: 'productId', fkNumber: true, fkLabel: r => r.productName },
+                    { name: 'unitPrice', label: 'Precio unitario', type: 'number', step: '0.01', min: 0, required: true, render: v => money(v) },
+                    { name: 'quantity', label: 'Cantidad', type: 'number', min: 1, required: true, default: 1 },
+                    { name: 'discount', label: 'Descuento', type: 'number', step: '0.01', min: 0, max: 1, default: 0, render: v => (Number(v) * 100).toFixed(0) + '%' }
+                ]
+            }
+        };
+
+        const menu = document.getElementById('menu');
+        const toastContainer = document.getElementById('toasts');
+        const modalElement = document.getElementById('entityModal');
+        const modal = new bootstrap.Modal(modalElement);
+        const form = document.getElementById('entityForm');
+        const formFields = document.getElementById('formFields');
+
+        let currentKey = null;
+        let currentData = [];
+        let editingKey = null;
+        let tabla = null;
+        const optionsCache = {};
+
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'login.html';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function mostrarToast(mensaje, tipo = 'success') {
+            const id = 'toast-' + Date.now();
+            toastContainer.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center text-bg-${tipo} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${escapeHtml(mensaje)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`);
+            const el = document.getElementById(id);
+            const toast = new bootstrap.Toast(el, { delay: 3200 });
+            el.addEventListener('hidden.bs.toast', () => el.remove());
+            toast.show();
+        }
+
+        async function apiFetch(path, options = {}) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Authorization': 'Bearer ' + token, ...(options.headers || {}) };
+            if (options.body) headers['Content-Type'] = 'application/json';
+
+            const response = await fetch(API_ORIGIN + path, { ...options, headers });
+
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                window.location.href = 'login.html';
+                throw new Error('Sesión expirada');
+            }
+
+            return response;
+        }
+
+        async function cargarOpciones(entityKey) {
+            if (optionsCache[entityKey]) return optionsCache[entityKey];
+
+            const response = await apiFetch('/api/' + entities[entityKey].endpoint);
+            if (!response.ok) throw new Error('No se pudieron cargar las opciones');
+
+            optionsCache[entityKey] = await response.json();
+            return optionsCache[entityKey];
+        }
+
+        async function cargarOpcionesDeEntidad(entity) {
+            const relaciones = [...new Set(entity.fields.filter(f => f.fk).map(f => f.fk))];
+            await Promise.all(relaciones.map(cargarOpciones));
+        }
+
+        function etiquetaFk(field, value) {
+            const lista = optionsCache[field.fk] || [];
+            const item = lista.find(o => String(o[field.fkValue]) === String(value));
+            return item ? field.fkLabel(item) : '';
+        }
+
+        function celda(field, value, row) {
+            if (field.fk && value != null) {
+                const texto = etiquetaFk(field, value);
+                return escapeHtml(texto || value);
+            }
+
+            if (typeof field.render === 'function') return field.render(value, row);
+
+            if (field.type === 'checkbox') {
+                return value
+                    ? '<span class="badge text-bg-success">Sí</span>'
+                    : '<span class="badge text-bg-secondary">No</span>';
+            }
+
+            if (field.type === 'date') {
+                return value ? new Date(value).toLocaleDateString('es-MX') : '<span class="text-muted">—</span>';
+            }
+
+            if (value === null || value === undefined || value === '') {
+                return '<span class="text-muted">—</span>';
+            }
+
+            return escapeHtml(value);
+        }
+
+        function botonesAccion(entity, row) {
+            const key = {};
+            entity.key.forEach(k => key[k] = row[k]);
+            const encoded = encodeURIComponent(JSON.stringify(key));
+
+            return `
+                <div class="d-flex justify-content-end gap-1">
+                    <button type="button" class="btn btn-outline-primary btn-action" data-action="edit" data-key="${encoded}" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-action" data-action="delete" data-key="${encoded}" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>`;
+        }
+
+        function columnasDeEntidad(entity) {
+            const columnas = entity.fields
+                .filter(f => f.table !== false)
+                .map(f => ({
+                    title: f.label,
+                    data: f.name,
+                    render: (value, type, row) => celda(f, value, row)
+                }));
+
+            columnas.push({
+                title: '',
+                data: null,
+                orderable: false,
+                searchable: false,
+                className: 'text-end',
+                render: (value, type, row) => botonesAccion(entity, row)
+            });
+
+            return columnas;
+        }
+
+        function pintarTabla(entity, data) {
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+                $('#dataTable').DataTable().destroy();
+            }
+
+            tabla = $('#dataTable').DataTable({
+                data,
+                columns: columnasDeEntidad(entity),
+                order: [],
+                pageLength: 10,
+                destroy: true,
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
+                },
+                dom: "<'row mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+            });
+        }
+
+        async function mostrarEntidad(entityKey) {
+            currentKey = entityKey;
+            const entity = entities[entityKey];
+
+            document.querySelectorAll('#menu .nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.entity === entityKey);
+            });
+            document.getElementById('pageTitle').textContent = entity.title;
+            document.getElementById('pageSubtitle').textContent = entity.subtitle;
+            document.getElementById('sidebar').classList.remove('open');
+
+            try {
+                await cargarOpcionesDeEntidad(entity);
+                const response = await apiFetch('/api/' + entity.endpoint);
+                if (!response.ok) throw new Error('No se pudo cargar la información');
+
+                currentData = await response.json();
+                pintarTabla(entity, currentData);
+            } catch (error) {
+                mostrarToast(error.message, 'danger');
+                currentData = [];
+                pintarTabla(entity, []);
+            }
+        }
+
+        function opcionesSelect(field) {
+            const lista = optionsCache[field.fk] || [];
+            const vacio = field.required ? '' : '<option value="">— Selecciona —</option>';
+            return vacio + lista.map(item =>
+                `<option value="${escapeHtml(item[field.fkValue])}">${escapeHtml(field.fkLabel(item))}</option>`
+            ).join('');
+        }
+
+        function campoFormulario(field) {
+            if (field.auto) return '';
+
+            const id = 'campo-' + field.name;
+            const requerido = field.required ? 'required' : '';
+            const label = `<label class="form-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' *' : ''}</label>`;
+            let control = '';
+            let claseCol = 'col-md-6';
+
+            if (field.type === 'textarea') {
+                claseCol = 'col-12';
+                control = `<textarea class="form-control" id="${id}" name="${field.name}" rows="3" ${requerido} ${field.maxLength ? `maxlength="${field.maxLength}"` : ''}></textarea>`;
+            } else if (field.type === 'select') {
+                control = `<select class="form-select" id="${id}" name="${field.name}" ${requerido}>${opcionesSelect(field)}</select>`;
+            } else if (field.type === 'checkbox') {
+                return `
+                    <div class="${claseCol}">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" role="switch" id="${id}" name="${field.name}">
+                            <label class="form-check-label" for="${id}">${escapeHtml(field.label)}</label>
+                        </div>
+                    </div>`;
+            } else {
+                const attrs = [
+                    `type="${field.type}"`,
+                    `class="form-control"`,
+                    `id="${id}"`,
+                    `name="${field.name}"`,
+                    requerido,
+                    field.maxLength ? `maxlength="${field.maxLength}"` : '',
+                    field.step ? `step="${field.step}"` : '',
+                    field.min !== undefined ? `min="${field.min}"` : '',
+                    field.max !== undefined ? `max="${field.max}"` : ''
+                ].filter(Boolean).join(' ');
+                control = `<input ${attrs}>`;
+            }
+
+            return `
+                <div class="${claseCol}">
+                    ${label}
+                    ${control}
+                    <div class="invalid-feedback">Completa este campo correctamente.</div>
+                </div>`;
+        }
+
+        function abrirModal(keys = null) {
+            const entity = entities[currentKey];
+            editingKey = keys;
+
+            document.getElementById('modalTitle').textContent =
+                keys ? 'Editar registro · ' + entity.title : 'Nuevo registro · ' + entity.title;
+
+            formFields.innerHTML = entity.fields.map(campoFormulario).join('');
+            form.classList.remove('was-validated');
+
+            entity.fields.forEach(field => {
+                if (field.auto) return;
+                const input = form.elements[field.name];
+                if (!input) return;
+
+                let value = keys ? currentData.find(row =>
+                    entity.key.every(k => String(row[k]) === String(keys[k]))
+                )?.[field.name] : field.default;
+
+                if (field.type === 'checkbox') {
+                    input.checked = Boolean(value);
+                } else if (field.type === 'date') {
+                    input.value = value ? String(value).substring(0, 10) : '';
+                } else {
+                    input.value = value ?? '';
+                }
+
+                if (keys && field.key) {
+                    input.disabled = true;
+                }
+            });
+
+            modal.show();
+        }
+
+        function construirPayload(entity) {
+            const payload = {};
+
+            entity.fields.forEach(field => {
+                if (field.auto) {
+                    if (editingKey) payload[field.name] = editingKey[field.name];
+                    return;
+                }
+
+                if (field.key && editingKey) {
+                    payload[field.name] = editingKey[field.name];
+                    return;
+                }
+
+                const input = form.elements[field.name];
+                if (!input) return;
+
+                if (field.type === 'checkbox') {
+                    payload[field.name] = input.checked;
+                } else if (field.type === 'number') {
+                    payload[field.name] = input.value === '' ? null : Number(input.value);
+                } else if (field.type === 'select') {
+                    payload[field.name] = input.value === '' ? null : (field.fkNumber ? Number(input.value) : input.value);
+                } else {
+                    payload[field.name] = input.value === '' ? null : input.value;
+                }
+            });
+
+            return payload;
+        }
+
+        function urlElemento(entity, keys) {
+            return '/api/' + entity.endpoint + '/' + entity.key.map(k => encodeURIComponent(keys[k])).join('/');
+        }
+
+        async function guardar(event) {
+            event.preventDefault();
+
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const entity = entities[currentKey];
+            const payload = construirPayload(entity);
+            const boton = document.getElementById('btnGuardar');
+            boton.disabled = true;
+
+            try {
+                const url = editingKey ? urlElemento(entity, editingKey) : '/api/' + entity.endpoint;
+                const response = await apiFetch(url, {
+                    method: editingKey ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const detalle = await response.text();
+                    throw new Error(detalle || 'No se pudo guardar el registro');
+                }
+
+                modal.hide();
+                Object.keys(optionsCache).forEach(k => delete optionsCache[k]);
+                mostrarToast(editingKey ? 'Registro actualizado' : 'Registro creado');
+                await mostrarEntidad(currentKey);
+            } catch (error) {
+                mostrarToast(error.message, 'danger');
+            } finally {
+                boton.disabled = false;
+            }
+        }
+
+        async function eliminar(keys) {
+            const entity = entities[currentKey];
+            if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const response = await apiFetch(urlElemento(entity, keys), { method: 'DELETE' });
+                if (!response.ok) throw new Error('No se pudo eliminar el registro');
+
+                Object.keys(optionsCache).forEach(k => delete optionsCache[k]);
+                mostrarToast('Registro eliminado');
+                await mostrarEntidad(currentKey);
+            } catch (error) {
+                mostrarToast(error.message, 'danger');
+            }
+        }
+
+        async function iniciar() {
+            const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+            if (usuario) {
+                document.getElementById('userName').textContent = usuario.name || usuario.userName || 'Usuario';
+                document.getElementById('userEmail').textContent = usuario.email || '';
+                if (usuario.picture) {
+                    document.getElementById('userAvatar').innerHTML =
+                        `<img src="${escapeHtml(usuario.picture)}" alt="Avatar" class="w-100 h-100" style="object-fit:cover">`;
+                }
+            }
+
+            menu.innerHTML = Object.entries(entities).map(([key, entity]) => `
+                <a href="#" class="nav-link" data-entity="${key}">
+                    <i class="bi ${entity.icon}"></i><span>${escapeHtml(entity.title)}</span>
+                </a>`).join('');
+
+            menu.addEventListener('click', event => {
+                const link = event.target.closest('a[data-entity]');
+                if (!link) return;
+                event.preventDefault();
+                mostrarEntidad(link.dataset.entity);
+            });
+
+            document.getElementById('btnNuevo').addEventListener('click', () => abrirModal());
+            document.getElementById('btnSalir').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                window.location.href = 'login.html';
+            });
+            document.getElementById('btnMenu').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+
+            document.getElementById('dataTable').addEventListener('click', event => {
+                const boton = event.target.closest('button[data-action]');
+                if (!boton) return;
+
+                const keys = JSON.parse(decodeURIComponent(boton.dataset.key));
+                if (boton.dataset.action === 'edit') abrirModal(keys);
+                if (boton.dataset.action === 'delete') eliminar(keys);
+            });
+
+            form.addEventListener('submit', guardar);
+
+            await mostrarEntidad('products');
+        }
+
+        iniciar();
+    </script>
+</body>
+
+</html>

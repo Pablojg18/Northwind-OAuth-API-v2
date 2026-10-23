@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Productos</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <h1>Productos (Northwind)</h1>
+  <table id="tabla" class="display" style="width:100%">
+    <thead>
+      <tr><th>ID</th><th>Producto</th><th>Precio</th><th>Stock</th></tr>
+    </thead>
+  </table>
+
+  <script>
+    const API_ORIGIN = location.port === '5500' ? 'https://localhost:7214' : '';
+    const API_URL = API_ORIGIN + '/api/Products';
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    const salir = document.createElement('button');
+    salir.textContent = 'Cerrar sesión';
+    salir.className = 'btn btn-secondary mb-3';
+    salir.onclick = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = 'login.html';
+    };
+    document.body.insertBefore(salir, document.getElementById('tabla'));
+
+    fetch(API_URL, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(response => {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = 'login.html';
+          throw new Error('Sesión expirada');
+        }
+        if (!response.ok) {
+          throw new Error('Error HTTP ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log(data);
+        $('#tabla').DataTable({
+          data: data,
+          columns: [
+            { data: 'productId' },
+            { data: 'productName' },
+            {
+              data: 'unitPrice',
+              render: function (data) {
+                return data != null ? '$' + Number(data).toFixed(2) : '';
+              }
+            },
+            { data: 'unitsInStock' }
+          ],
+          language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
+          }
+        });
+      })
+      .catch(error => console.error('Error al consumir la API:', error));
+  </script>
+</body>
+</html>

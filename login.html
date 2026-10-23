@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Iniciar sesiÃ³n</title>
+    <title>Iniciar sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
@@ -18,7 +18,7 @@
                 <ul class="nav nav-tabs justify-content-center mb-4" id="tabAuth" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="tabLogin" data-bs-toggle="tab" data-bs-target="#paneLogin"
-                            type="button" role="tab">Iniciar sesiÃ³n</button>
+                            type="button" role="tab">Iniciar sesión</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="tabRegistro" data-bs-toggle="tab" data-bs-target="#paneRegistro"
@@ -32,15 +32,15 @@
                         <div id="googleNoConfig" class="alert alert-warning py-2 small d-none">
                             Configura <code>Authentication:Google:ClientId</code> en <code>appsettings.json</code>.
                         </div>
-                        <div class="text-center text-muted small mb-3">â€” o usa tu correo â€”</div>
+                        <div class="text-center text-muted small mb-3">— o usa tu correo —</div>
 
                         <form id="frmLogin" novalidate>
                             <div class="mb-3">
-                                <label for="loginEmail" class="form-label">Correo electrÃ³nico</label>
+                                <label for="loginEmail" class="form-label">Correo electrónico</label>
                                 <input type="email" class="form-control" id="loginEmail" required>
                             </div>
                             <div class="mb-3">
-                                <label for="loginPassword" class="form-label">ContraseÃ±a</label>
+                                <label for="loginPassword" class="form-label">Contraseña</label>
                                 <input type="password" class="form-control" id="loginPassword" required>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Entrar</button>
@@ -50,13 +50,13 @@
                     <div class="tab-pane fade" id="paneRegistro" role="tabpanel">
                         <form id="frmRegistro" novalidate>
                             <div class="mb-3">
-                                <label for="regEmail" class="form-label">Correo electrÃ³nico</label>
+                                <label for="regEmail" class="form-label">Correo electrónico</label>
                                 <input type="email" class="form-control" id="regEmail" required>
                             </div>
                             <div class="mb-3">
-                                <label for="regPassword" class="form-label">ContraseÃ±a</label>
+                                <label for="regPassword" class="form-label">Contraseña</label>
                                 <input type="password" class="form-control" id="regPassword" minlength="6" required>
-                                <div class="form-text">MÃ­nimo 6 caracteres, una mayÃºscula, una minÃºscula, un nÃºmero y un sÃ­mbolo.</div>
+                                <div class="form-text">Mínimo 6 caracteres, una mayúscula, una minúscula, un número y un símbolo.</div>
                             </div>
                             <button type="submit" class="btn btn-success w-100">Registrarme</button>
                         </form>
@@ -83,31 +83,6 @@
             el.textContent = texto;
             el.classList.remove('d-none');
         }
-
-        document.getElementById('frmRegistro').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-
-            try {
-                const response = await fetch(API_URL + '/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await response.json();
-
-                if (!response.ok) {
-                    const detalles = Array.isArray(data) ? data.map(d => d.description).join(' ') : data.message;
-                    throw new Error(detalles || 'No se pudo crear el usuario');
-                }
-
-                mostrarMensaje(data.message, 'success');
-                document.getElementById('frmRegistro').reset();
-            } catch (error) {
-                mostrarMensaje(error.message, 'danger');
-            }
-        });
 
         function esperarGoogle() {
             return new Promise((resolve, reject) => {
@@ -155,6 +130,12 @@
             }
         }
 
+        function guardarSesion(data) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('usuario', JSON.stringify(data.user));
+            window.location.href = 'dashboard.html';
+        }
+
         async function manejarCredencialGoogle(respuesta) {
             try {
                 const response = await fetch(API_URL + '/google', {
@@ -165,18 +146,41 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'No se pudo iniciar sesiÃ³n con Google');
+                    throw new Error(data.message || 'No se pudo iniciar sesión con Google');
                 }
 
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('usuario', JSON.stringify(data.user));
-                window.location.href = 'dashboard.html';
+                guardarSesion(data);
             } catch (error) {
                 mostrarMensaje(error.message, 'danger');
             }
         }
 
         iniciarGoogle();
+
+        document.getElementById('frmRegistro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch(API_URL + '/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const detalles = Array.isArray(data) ? data.map(d => d.description).join(' ') : data.message;
+                    throw new Error(detalles || 'No se pudo crear el usuario');
+                }
+
+                mostrarMensaje(data.message, 'success');
+                document.getElementById('frmRegistro').reset();
+            } catch (error) {
+                mostrarMensaje(error.message, 'danger');
+            }
+        });
 
         document.getElementById('frmLogin').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -192,13 +196,10 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Credenciales invÃ¡lidas');
+                    throw new Error(data.message || 'Credenciales inválidas');
                 }
 
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('usuario', JSON.stringify(data.user));
-                mostrarMensaje('Bienvenido ' + data.user.email, 'success');
-                window.location.href = 'dashboard.html';
+                guardarSesion(data);
             } catch (error) {
                 mostrarMensaje(error.message, 'danger');
             }

@@ -1,0 +1,184 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.datatables.net/3.1.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <!-- Modal -->
+    <div class="modal fade" id="mdlRegistro" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Producto</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="container mt-4 needs-validation" id="frmRegistro" novalidate>
+                        
+                        <!-- Nombre del Producto -->
+                        <div class="mb-3">
+                            <label for="ProductName" class="form-label">Nombre del Producto *</label>
+                            <input type="text" class="form-control" id="ProductName" name="ProductName" required
+                                maxlength="40" minlength="5">
+                            <div class="invalid-feedback">Por favor, ingresa el nombre del producto (entre 5 y 40
+                                caracteres).</div>
+                            <div class="valid-feedback">Correcto</div>
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+                                <label for="SupplierId" class="form-label">Proveedor</label>
+                                <select class="form-select" id="SupplierId" name="SupplierId">
+                                    <option value="0" selected>Selecciona un proveedor...</option>
+                                    <!-- Cargar proveedores de la API-->
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="CategoryId" class="form-label">Categoría</label>
+                                <select class="form-select" id="CategoryId" name="CategoryId">
+                                    <option value="0" selected>Selecciona una categoría...</option>
+                                    <!-- Cargar categorías de la API-->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="QuantityPerUnit" class="form-label">Cantidad por Unidad</label>
+                                <input type="text" class="form-control" id="QuantityPerUnit" name="QuantityPerUnit"
+                                    placeholder="Ej. 24 botellas de 500ml">
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+                                <label for="UnitPrice" class="form-label">Precio Unitario ($)</label>
+                                <input type="number" class="form-control" id="UnitPrice" name="UnitPrice" step="0.01"
+                                    min="0">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="UnitsInStock" class="form-label">Unidades en Stock</label>
+                                <input type="number" class="form-control" id="UnitsInStock" name="UnitsInStock" min="0">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="UnitsOnOrder" class="form-label">Unidades en Pedido</label>
+                                <input type="number" class="form-control" id="UnitsOnOrder" name="UnitsOnOrder" min="0">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="ReorderLevel" class="form-label">Nivel de Reorden</label>
+                                <input type="number" class="form-control" id="ReorderLevel" name="ReorderLevel" min="0">
+                            </div>
+                        </div>
+
+                        <div class="mb-4 form-check text-start">
+                            <input type="checkbox" class="form-check-input" id="Discontinued" name="Discontinued"
+                                value="true">
+                            <label class="form-check-label" for="Discontinued">Producto Descontinuado</label>
+                        </div>
+                        
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" form="frmRegistro">Guardar</button>
+                    <button type="reset" class="btn btn-secondary" form="frmRegistro">Limpiar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Lista de productos</h1>
+
+        <button class="btn btn-primary mb-3" onclick="mostrarModal(0)">
+            Registrar Producto</button>
+
+
+        <table class="table table-striped" id="listaProductos" style="width:100%">
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/3.1.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/3.1.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        cargarProductos();
+
+        function cargarProductos() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const API_ORIGIN = location.port === '5500' ? 'https://localhost:7214' : '';
+
+            fetch(API_ORIGIN + '/api/Products', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+                .then(response => {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        window.location.href = 'login.html';
+                        return [];
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    new DataTable('#listaProductos', {
+                        columns: [
+                            { title: 'Producto', data: 'productName' },
+                            { title: 'Proveedor', data: 'supplier' },
+                            { title: 'Categoría', data: 'category' },
+                            { title: 'Precio', data: 'unitPrice' },
+                            { title: 'Existencia', data: 'unitsInStock' },
+                            {
+                                title: 'Activo', data: 'discontinued', render: function (data, type, row) {
+                                    return data.discontinued ? 'NO' : 'SI';
+                                }
+                            },
+                            {
+                                title: '', data: '', render: function (data, type, row) {
+                                    return `<button type="button" class="btn btn-primary" onclick="mostrarModal(${data.productId})">
+                                        Editar
+                                    </button>`;
+                                    
+                                }
+                            }
+                        ],
+                        data: data,
+
+                    });
+                })
+                .catch(error => console.error('Error al cargar los productos:', error));
+        }
+    
+        var idProducto=0;
+        const myModal = new bootstrap.Modal('#mdlRegistro', {
+            keyboard: false
+        });
+        function mostrarModal(id){
+            idProducto = id;
+            //Falta identificar si es agregar o editar, para este ultimo caso
+            //lanzar la petición para traer los datos del producto y llenar el formulario
+            myModal.show();
+        }
+    </script>
+</body>
+
+</html>
