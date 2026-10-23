@@ -592,11 +592,27 @@
         }
 
         function pintarTabla(entity, data) {
-            if ($.fn.DataTable.isDataTable('#dataTable')) {
-                $('#dataTable').DataTable().destroy();
+            const anterior = document.getElementById('dataTable');
+
+            if (anterior && $.fn.DataTable.isDataTable(anterior)) {
+                $(anterior).DataTable().destroy();
             }
 
-            tabla = $('#dataTable').DataTable({
+            // Cada entidad tiene un número distinto de columnas. DataTables conserva
+            // el <thead> de la tabla anterior y falla con "Incorrect column count"
+            // (o "Cannot read properties of undefined (reading 'parentNode')"),
+            // así que se reemplaza la tabla por una nueva en cada render.
+            const nueva = document.createElement('table');
+            nueva.id = 'dataTable';
+            nueva.className = 'table table-hover align-middle w-100';
+
+            if (anterior && anterior.parentNode) {
+                anterior.parentNode.replaceChild(nueva, anterior);
+            } else {
+                document.querySelector('.card-table .card-body').appendChild(nueva);
+            }
+
+            tabla = $(nueva).DataTable({
                 data,
                 columns: columnasDeEntidad(entity),
                 order: [],
@@ -627,9 +643,14 @@
                 const response = await apiFetch('/api/' + entity.endpoint);
                 if (!response.ok) throw new Error('No se pudo cargar la información');
 
+                // Si el usuario cambió de sección mientras cargaba, se descarta
+                // esta respuesta para no pintar datos de otra entidad.
+                if (currentKey !== entityKey) return;
+
                 currentData = await response.json();
                 pintarTabla(entity, currentData);
             } catch (error) {
+                if (currentKey !== entityKey) return;
                 mostrarToast(error.message, 'danger');
                 currentData = [];
                 pintarTabla(entity, []);
@@ -844,9 +865,11 @@
                 document.getElementById('sidebar').classList.toggle('open');
             });
 
-            document.getElementById('dataTable').addEventListener('click', event => {
+            // Delegación: la tabla se recrea en cada render, así que el listener
+            // se engancha al contenedor estable en lugar del <table>.
+            document.querySelector('.card-table').addEventListener('click', event => {
                 const boton = event.target.closest('button[data-action]');
-                if (!boton) return;
+                if (!boton || !boton.closest('#dataTable')) return;
 
                 const keys = JSON.parse(decodeURIComponent(boton.dataset.key));
                 if (boton.dataset.action === 'edit') abrirModal(keys);
