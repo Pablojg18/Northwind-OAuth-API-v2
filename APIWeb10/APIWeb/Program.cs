@@ -77,21 +77,13 @@ builder.Services.AddScoped<TokenService>();
 // ---------------------------------------------------------------------------
 builder.Services.AddControllers();
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        if (allowedOrigins.Length == 0 || allowedOrigins.Contains("*"))
-        {
-            policy.AllowAnyOrigin();
-        }
-        else
-        {
-            policy.WithOrigins(allowedOrigins);
-        }
-
-        policy.AllowAnyHeader().AllowAnyMethod();
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
