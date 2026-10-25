@@ -131,8 +131,21 @@ var app = builder.Build();
 // ---------------------------------------------------------------------------
 app.MapOpenApi();
 
-app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = ["login.html", "index.html"] });
 app.UseStaticFiles();
+
+app.MapGet("/", () => Results.Json(new
+{
+    name = "Northwind OAuth API",
+    status = "online",
+    message = "Usa /api para consumir los endpoints. Consulta la documentación en /swagger/index.html",
+    swagger = "/swagger/index.html",
+    auth = new
+    {
+        register = "/api/Auth/register",
+        login = "/api/Auth/login",
+        google = "/api/Auth/google"
+    }
+}));
 
 app.MapGet("/swagger", () => Results.Redirect("/swagger/index.html"));
 
